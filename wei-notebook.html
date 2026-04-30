@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="魏導聯絡簿">
+<meta name="theme-color" content="#FAF6EF">
+<title>魏導聯絡簿</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1208;
+    --warm: #8B4513;
+    --gold: #C8922A;
+    --gold-lt: #F0C060;
+    --cream: #FAF6EF;
+    --cream-dk: #F0E8D8;
+    --green: #2E6B45;
+    --green-lt: #EBF5EF;
+    --blue: #1877F2;
+    --blue-lt: #EBF2FF;
+    --red: #C0392B;
+    --red-lt: #FDF0EE;
+    --rule: rgba(139,69,19,0.15);
+    --shadow: 0 4px 24px rgba(26,18,8,0.10);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--ink);
+    padding: 20px 24px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: 0.04em;
+  }
+
+  .topbar .week-badge {
+    background: var(--gold);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  .topbar .greeting {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── NAV TABS ── */
+  .tabs {
+    display: flex;
+    background: var(--ink);
+    padding: 0 24px 0;
+    gap: 4px;
+    border-bottom: 3px solid var(--gold);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 4px 12px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -3px;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .tab.active {
+    color: var(--gold-lt);
+    border-bottom-color: var(--gold-lt);
+  }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    flex: 1;
+    padding: 0 0 100px;
+    overflow-y: auto;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── THIS WEEK CARD ── */
+  .week-header {
+    background: var(--cream-dk);
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .week-header h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--ink);
+  }
+
+  .week-header p {
+    font-size: 14px;
+    color: var(--warm);
+    margin-top: 4px;
+  }
+
+  /* ── SCHEDULE CALENDAR (橫向) ── */
+  .schedule-strip {
+    margin: 14px 16px 0;
+    background: white;
+    border-radius: 14px;
+    border: 1.5px solid var(--rule);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .schedule-strip-title {
+    background: var(--ink);
+    color: var(--gold-lt);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 10px 18px;
+  }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    border-top: 1px solid var(--rule);
+  }
+
+  .sched-cell {
+    border-right: 1px solid var(--rule);
+    padding: 0;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sched-cell:last-child { border-right: none; }
+
+  .sched-cell-head {
+    padding: 6px 4px 4px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .sched-dow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #aaa;
+    display: block;
+  }
+
+  .sched-date {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.1;
+    display: block;
+  }
+
+  .sched-cell.has-post .sched-cell-head {
+    background: var(--cream-dk);
+  }
+
+  .sched-cell.is-wed .sched-cell-head { background: var(--green-lt); }
+  .sched-cell.is-wed .sched-dow { color: var(--green); }
+  .sched-cell.is-wed .sched-date { color: var(--green); }
+
+  .sched-cell.is-fri .sched-cell-head { background: var(--blue-lt); }
+  .sched-cell.is-fri .sched-dow { color: var(--blue); }
+  .sched-cell.is-fri .sched-date { color: var(--blue); }
+
+  .sched-cell.is-ad .sched-cell-head { background: #FFF3E0; }
+  .sched-cell.is-ad .sched-dow { color: #E65100; }
+  .sched-cell.is-ad .sched-date { color: #E65100; }
+
+  .sched-cell.is-today .sched-date {
+    background: var(--gold);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  .sched-topic {
+    padding: 5px 5px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ink);
+    flex: 1;
+    word-break: break-all;
+  }
+
+  .sched-topic-empty {
+    flex: 1;
+  }
+
+  .sched-tag {
+    font-size: 9px;
+    color: #bbb;
+    padding: 0 5px 5px;
+  }
+
+  /* ── POST CARD ── */
+  .post-card {
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--rule);
+  }
+
+  .post-card-head {
+    padding: 16px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .day-bubble {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .day-bubble .day-name { font-size: 11px; letter-spacing: 0.08em; }
+  .day-bubble .day-num { font-size: 22px; line-height: 1; font-family: 'Noto Serif TC', serif; font-weight: 900; }
+
+  .day-bubble.wed { background: var(--green-lt); color: var(--green); }
+  .day-bubble.fri { background: var(--blue-lt); color: var(--blue); }
+  .day-bubble.done { background: #f0f0f0; color: #aaa; }
+
+  .post-head-info h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+
+  .post-head-info .post-type {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  .status-dot {
+    margin-left: auto;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.pending { background: var(--gold); }
+  .status-dot.done { background: #ccc; }
+  .status-dot.urgent { background: var(--red); }
+
+  .post-card-body {
+    padding: 16px 20px;
+  }
+
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-item {}
+
+  .info-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--warm);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .info-text {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  .info-tip {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #666;
+    background: var(--cream);
+    border-left: 3px solid var(--gold);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 4px;
+  }
+
+  .visual-tag {
+    display: inline-block;
+    background: var(--cream-dk);
+    color: var(--warm);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+
+  /* ── HOMEWORK BOX ── */
+  .hw-box {
+    margin: 16px 20px 0;
+    padding: 16px;
+    background: #FFF8EC;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+  }
+
+  .hw-box-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--warm);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hw-textarea {
+    width: 100%;
+    min-height: 100px;
+    border: 1.5px solid var(--rule);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+    background: white;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .hw-textarea:focus { border-color: var(--gold); }
+  .hw-textarea::placeholder { color: #ccc; }
+
+  .hw-hint {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 8px;
+  }
+
+  /* ── SUBMIT BTN ── */
+  .submit-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 16px 20px 0;
+    padding: 16px;
+    background: var(--green);
+    color: white;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .submit-btn:active { background: #235233; transform: scale(0.98); }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px 4px;
+  }
+
+  .section-divider span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--warm);
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* ── RULES VIEW ── */
+  .rules-card {
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--rule);
+  }
+
+  .rule-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .rule-item:last-child { border-bottom: none; }
+
+  .rule-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+
+  .rule-item h4 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+
+  .rule-item p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #555;
+  }
+
+  .rule-item p strong { color: var(--warm); font-weight: 700; }
+
+  /* ── REMINDER BANNER ── */
+  .reminder {
+    margin: 16px 16px 0;
+    padding: 16px 20px;
+    background: var(--red-lt);
+    border: 1.5px solid #F0C0BC;
+    border-radius: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .reminder-icon { font-size: 24px; flex-shrink: 0; }
+
+  .reminder h4 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--red);
+    margin-bottom: 4px;
+  }
+
+  .reminder p { font-size: 15px; line-height: 1.6; color: #7a2020; }
+
+  /* ── HISTORY VIEW ── */
+  .history-item {
+    margin: 16px 16px 0;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1.5px solid var(--rule);
+    box-shadow: 0 2px 8px rgba(26,18,8,0.06);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .history-check {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--green-lt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .history-info h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .history-info p { font-size: 13px; color: #999; margin-top: 2px; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    border-top: 1.5px solid var(--rule);
+    display: flex;
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 12px 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+  }
+
+  .nav-btn:active { background: var(--cream); }
+
+  .nav-icon { font-size: 24px; line-height: 1; }
+
+  .nav-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #bbb;
+  }
+
+  .nav-btn.active .nav-label { color: var(--gold); }
+  .nav-btn.active .nav-icon { filter: saturate(1.5); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .post-card, .rules-card, .history-item, .reminder {
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .post-card:nth-child(2) { animation-delay: 0.05s; }
+  .post-card:nth-child(3) { animation-delay: 0.10s; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 300;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>✈️ 魏導聯絡簿</h1>
+        <p class="greeting" id="greeting">早安，魏導！</p>
+      </div>
+      <div class="week-badge" id="week-badge">第一週</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('week')">本週功課</div>
+    <div class="tab" onclick="switchTab('rules')">發文規則</div>
+    <div class="tab" onclick="switchTab('history')">已完成</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── 本週功課 ── -->
+    <div class="view active" id="view-week">
+
+      <div class="week-header">
+        <h2 id="week-title">本週發文主題</h2>
+        <p id="week-date">咪咪已為您準備好，請週日前完成草稿 ✍️</p>
+      </div>
+
+      <!-- 本週發文排程（橫向週曆） -->
+      <div class="schedule-strip">
+        <div class="schedule-strip-title">📅 本週發文排程</div>
+        <div class="schedule-grid" id="schedule-grid">
+          <!-- 由 JS 動態產生 -->
+        </div>
+      </div>
+
+      <div class="section-divider"><span>本週功課</span></div>
+
+      <div id="post-cards-container">
+        <!-- 由 JS 從 Google Sheet 動態產生 -->
+        <div style="text-align:center;padding:40px;color:#bbb;font-size:15px;">載入中…</div>
+      </div>
+
+    </div><!-- end view-week -->
+
+    <!-- ── 發文規則 ── -->
+    <div class="view" id="view-rules">
+
+      <div class="reminder">
+        <div class="reminder-icon">⏰</div>
+        <div>
+          <h4>發文時間規定</h4>
+          <p>請在 <strong>早上 9 點到晚上 9 點</strong> 之間發文。早上 5 點發文會讓大家被吵醒，反而不好 😅</p>
+        </div>
+      </div>
+
+      <div class="section-divider"><span>每週節奏</span></div>
+
+      <div class="rules-card">
+        <div class="rule-item">
+          <div class="rule-icon">📅</div>
+          <div>
+            <h4>週一｜和咪咪討論</h4>
+            <p>線上確認本週方向，有問題這時候問。草稿有需要修改，咪咪這天幫您調整。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">📝</div>
+          <div>
+            <h4>週三｜第一篇發文</h4>
+            <p>依照本週主題，發第一篇。<strong>時間：上午 10 點～下午 2 點</strong> 最好。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">🎯</div>
+          <div>
+            <h4>週五｜第二篇發文</h4>
+            <p>發第二篇。<strong>時間：下午 12 點～下午 3 點</strong> 最好，週末前大家最願意看。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✏️</div>
+          <div>
+            <h4>週日｜交作業</h4>
+            <p>把下週兩篇的草稿寫好，在這個 app 裡填好送出。<strong>截止：週日晚上 9 點前</strong>。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"><span>內容原則</span></div>
+
+      <div class="rules-card">
+        <div class="rule-item">
+          <div class="rule-icon">🧡</div>
+          <div>
+            <h4>用自己的話說</h4>
+            <p>AI 可以幫忙做圖、找靈感，但文字一定要是您說的話。讀者感受得出來真不真誠。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">🚫</div>
+          <div>
+            <h4>不要直接貼旅行社 DM</h4>
+            <p>每週最多一篇可以推薦行程，但要用您的口吻介紹，不是直接複製貼上廣告。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">💬</div>
+          <div>
+            <h4>看到留言要回</h4>
+            <p>有人留言或問問題，當天盡量回覆。這是建立信任最重要的一步。</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 16px;"></div>
+
+    </div><!-- end view-rules -->
+
+    <!-- ── 已完成 ── -->
+    <div class="view" id="view-history">
+
+      <div class="section-divider"><span>已交出的草稿</span></div>
+
+      <div id="history-list">
+        <div style="text-align:center; padding: 60px 24px; color: #bbb;">
+          <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+          <div style="font-size: 16px; line-height: 1.6;">還沒有完成的紀錄<br>完成草稿後會出現在這裡</div>
+        </div>
+      </div>
+
+      <div style="height: 16px;"></div>
+
+    </div><!-- end view-history -->
+
+  </div><!-- end content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-btn active" id="nav-week" onclick="switchTab('week')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">本週功課</div>
+    </div>
+    <div class="nav-btn" id="nav-rules" onclick="switchTab('rules')">
+      <div class="nav-icon">📌</div>
+      <div class="nav-label">發文規則</div>
+    </div>
+    <div class="nav-btn" id="nav-history" onclick="switchTab('history')">
+      <div class="nav-icon">✅</div>
+      <div class="nav-label">已完成</div>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ══════════════════════════════════════════
+  //  Apps Script 後台網址
+  // ══════════════════════════════════════════
+  const API = 'https://script.google.com/macros/s/AKfycbzdltpeL5DFcb4js4qOucWavy-J7hGVrkOxfGsrBtHf2ceU2WxreGSuGHqZuEolnW2a/exec';
+
+  const DOW_LABELS = ['一','二','三','四','五','六','日'];
+  const TYPE_LABEL = { wed:'📖 故事型', fri:'💡 資訊型', ad:'📢 廣告文', interact:'💬 互動型' };
+
+  let currentWeek = '';
+  let scheduleData = {};   // dowNum -> { topic, type, typeLabel }
+  let postCards = [];      // [{ day:'wed'|'fri'|..., topic, dow }]
+
+  // ── Tab 切換 ──
+  function switchTab(tab) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+    document.querySelectorAll('.tab')[['week','rules','history'].indexOf(tab)].classList.add('active');
+    document.getElementById('nav-' + tab).classList.add('active');
+    if (tab === 'history') loadHistory();
+  }
+
+  // ── 週次計算 ──
+  function getWeekKey(d) {
+    const year = d.getFullYear();
+    const start = new Date(year, 0, 1);
+    const weekNum = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+    return `${year}-W${String(weekNum).padStart(2,'0')}`;
+  }
+
+  function getMondayOf(d) {
+    const day = d.getDay();
+    const m = new Date(d);
+    m.setDate(d.getDate() - ((day + 6) % 7));
+    m.setHours(0,0,0,0);
+    return m;
+  }
+
+  // ── 初始化 ──
+  async function init() {
+    const now = new Date();
+    const hour = now.getHours();
+    const greet = hour < 12 ? '早安' : hour < 18 ? '午安' : '晚安';
+    document.getElementById('greeting').textContent = greet + '，魏導！今天加油 💪';
+
+    currentWeek = getWeekKey(now);
+    const weekNum = currentWeek.split('-W')[1];
+    document.getElementById('week-badge').textContent = '第 ' + parseInt(weekNum) + ' 週';
+    document.getElementById('week-title').textContent = (now.getMonth()+1) + ' 月本週發文主題';
+    document.getElementById('week-date').textContent = '咪咪已為您準備好，請週日前完成草稿 ✍️';
+
+    await loadSchedule(now);
+  }
+
+  // ── 從 Sheet 讀排程 ──
+  async function loadSchedule(now) {
+    const monday = getMondayOf(now);
+
+    // 先用本機硬碼資料讓畫面立即顯示（loading 狀態）
+    renderCalendar(monday, now, {});
+    renderPostCards(now, []);
+
+    try {
+      const res = await fetch(`${API}?action=schedule&week=${currentWeek}`);
+      const json = await res.json();
+
+      // 把 array 轉成 dow -> sched 的 map
+      const map = {};
+      (json.schedule || []).forEach(s => {
+        map[s.dow] = {
+          topic: s.topic,
+          type: s.type,
+          typeLabel: TYPE_LABEL[s.type] || s.type
+        };
+      });
+      scheduleData = map;
+
+      renderCalendar(monday, now, map);
+      renderPostCards(now, json.schedule || []);
+    } catch (err) {
+      console.warn('讀取排程失敗：', err);
+      showToast('⚠️ 無法連線，顯示暫存資料');
+    }
+  }
+
+  // ── 橫向週曆 ──
+  function renderCalendar(monday, now, map) {
+    const grid = document.getElementById('schedule-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dowNum = i + 1;
+      const isToday = d.toDateString() === now.toDateString();
+      const sched = map[dowNum];
+
+      let cellClass = 'sched-cell';
+      if (sched) cellClass += ' has-post is-' + sched.type;
+      if (isToday) cellClass += ' is-today';
+
+      grid.innerHTML += `
+        <div class="${cellClass}">
+          <div class="sched-cell-head">
+            <span class="sched-dow">週${DOW_LABELS[i]}</span>
+            <span class="sched-date">${d.getDate()}</span>
+          </div>
+          ${sched
+            ? `<div class="sched-topic">${sched.topic}</div><div class="sched-tag">${sched.typeLabel}</div>`
+            : `<div class="sched-topic-empty"></div>`
+          }
+        </div>`;
+    }
+  }
+
+  // ── 功課卡片（從 Sheet 資料動態產生）──
+  function renderPostCards(now, schedArr) {
+    const container = document.getElementById('post-cards-container');
+    container.innerHTML = '';
+    postCards = [];
+
+    // 只顯示 wed / fri / 其他有排程的天
+    const items = schedArr.filter(s => s.topic);
+    if (items.length === 0) {
+      // 如果 Sheet 還沒填，顯示預設提示
+      container.innerHTML = `<div style="text-align:center;padding:40px 24px;color:#bbb;">
+        <div style="font-size:36px;margin-bottom:8px;">📭</div>
+        <div style="font-size:15px;line-height:1.7;">咪咪還沒出本週功課<br>請稍後再看或聯絡咪咪 😊</div>
+      </div>`;
+      return;
+    }
+
+    const monday = getMondayOf(now);
+    const dowToDate = (dow) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + dow - 1);
+      return d;
+    };
+
+    const dayLabel = { wed:'週三', fri:'週五', ad:'廣告文', interact:'互動文' };
+    const bubbleClass = { wed:'wed', fri:'fri', ad:'fri', interact:'wed' };
+
+    items.forEach((s, idx) => {
+      const cardId = 'card-' + idx;
+      const d = dowToDate(s.dow);
+      const dowName = '週' + DOW_LABELS[s.dow - 1];
+      const label = dayLabel[s.type] || dowName;
+      const bClass = bubbleClass[s.type] || 'wed';
+      const typeL = TYPE_LABEL[s.type] || '';
+
+      postCards.push({ cardId, dow: s.dow, topic: s.topic, label: dowName });
+
+      const isFirst = idx === 0;
+      const divider = idx > 0 ? `<div class="section-divider"><span>第 ${idx+1} 篇</span></div>` : '';
+
+      container.innerHTML += `
+        ${divider}
+        <div class="post-card" id="${cardId}">
+          <div class="post-card-head">
+            <div class="day-bubble ${bClass}">
+              <span class="day-name">${dowName}</span>
+              <span class="day-num">${d.getDate()}</span>
+            </div>
+            <div class="post-head-info">
+              <h3>${s.topic}</h3>
+              <p class="post-type">${typeL}</p>
+            </div>
+            <div class="status-dot pending" id="status-${cardId}"></div>
+          </div>
+          <div class="post-card-body">
+            <div class="info-row">
+              <div class="info-item">
+                <div class="info-label">咪咪的提示</div>
+                <div class="info-tip">用自己的話說出來就好！想想有什麼親身經歷、或是讓你印象深刻的事？</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">用哪張照片</div>
+                <span class="visual-tag">📸 選一張跟主題相關的照片，或用 Gemini 製圖</span>
+              </div>
+            </div>
+            <div class="hw-box">
+              <div class="hw-box-title">✏️ 您的草稿（週日前完成）</div>
+              <textarea class="hw-textarea" id="hw-${cardId}" placeholder="用自己的話寫就好，三到五句話即可。咪咪週一幫您潤飾 😊"></textarea>
+              <p class="hw-hint">💡 不知道怎麼開始？先寫一句話也可以，週一再跟咪咪討論</p>
+            </div>
+            <button class="submit-btn" onclick="submitHW('${cardId}','${dowName}','${s.topic}')">✅ 草稿完成，送出給咪咪</button>
+          </div>
+        </div>`;
+    });
+  }
+
+  // ── 送出草稿 → Apps Script → Sheet + Email ──
+  async function submitHW(cardId, label, topic) {
+    const textarea = document.getElementById('hw-' + cardId);
+    const text = textarea.value.trim();
+    if (!text) {
+      showToast('請先寫下您的草稿再送出喔 ✏️');
+      textarea.focus();
+      return;
+    }
+
+    const btn = document.querySelector(`button[onclick="submitHW('${cardId}','${label}','${topic}')"]`);
+    btn.textContent = '⏳ 送出中…';
+    btn.disabled = true;
+
+    try {
+      await fetch(API, {
+        method: 'POST',
+        body: JSON.stringify({
+          week:  currentWeek,
+          day:   label,
+          topic: topic,
+          draft: text
+        })
+      });
+    } catch(e) {
+      console.warn('送出失敗：', e);
+    }
+
+    // 不論網路成功與否，UI 都標記完成
+    document.getElementById('status-' + cardId).className = 'status-dot done';
+    textarea.disabled = true;
+    textarea.style.background = '#f9f9f9';
+    textarea.style.color = '#aaa';
+    btn.textContent = '✅ 已送出！等待咪咪週一確認';
+    btn.style.background = '#aaa';
+
+    addHistoryItem(label, topic, new Date(), text);
+    showToast('🎉 太棒了！草稿已送出，等咪咪週一回覆');
+  }
+
+  // ── 讀歷史紀錄（已完成頁）──
+  async function loadHistory() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;font-size:15px;">載入中…</div>';
+    try {
+      const res = await fetch(`${API}?action=history`);
+      const json = await res.json();
+      list.innerHTML = '';
+      if (!json.history || json.history.length === 0) {
+        list.innerHTML = `<div style="text-align:center;padding:60px 24px;color:#bbb;">
+          <div style="font-size:48px;margin-bottom:12px;">📭</div>
+          <div style="font-size:16px;line-height:1.6;">還沒有完成的紀錄<br>完成草稿後會出現在這裡</div>
+        </div>`;
+        return;
+      }
+      // 最新的排在最上面
+      [...json.history].reverse().forEach(h => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <div class="history-check">✅</div>
+          <div class="history-info">
+            <h4>${h.topic || h.dow}</h4>
+            <p>${h.week}・${h.dow}・${h.time}</p>
+          </div>`;
+        list.appendChild(item);
+      });
+    } catch(e) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:#bbb;font-size:15px;">無法載入，請確認網路連線</div>';
+    }
+  }
+
+  // ── 本機加一筆歷史（送出當下立即顯示）──
+  function addHistoryItem(label, topic, date, draft) {
+    const list = document.getElementById('history-list');
+    const empty = list.querySelector('div[style]');
+    if (empty) empty.remove();
+    const dateStr = (date.getMonth()+1) + '/' + date.getDate() + ' '
+      + date.getHours() + ':' + String(date.getMinutes()).padStart(2,'0');
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="history-check">✅</div>
+      <div class="history-info">
+        <h4>${topic}</h4>
+        <p>${label}・${dateStr}</p>
+      </div>`;
+    list.prepend(item);
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── 啟動 ──
+  init();
+</script>
+</body>
+</html>
