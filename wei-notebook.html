@@ -222,6 +222,10 @@
   .sched-cell.is-ad .sched-dow { color: #E65100; }
   .sched-cell.is-ad .sched-date { color: #E65100; }
 
+  .sched-cell.is-note .sched-cell-head { background: #FFFBE6; }
+  .sched-cell.is-note .sched-dow { color: #B8860B; }
+  .sched-cell.is-note .sched-date { color: #B8860B; }
+
   .sched-cell.is-today .sched-date {
     background: var(--gold);
     color: white;
@@ -802,7 +806,7 @@
   const API = 'https://script.google.com/macros/s/AKfycbzdltpeL5DFcb4js4qOucWavy-J7hGVrkOxfGsrBtHf2ceU2WxreGSuGHqZuEolnW2a/exec';
 
   const DOW_LABELS = ['一','二','三','四','五','六','日'];
-  const TYPE_LABEL = { wed:'📖 故事型', fri:'💡 資訊型', ad:'📢 廣告文', interact:'💬 互動型' };
+  const TYPE_LABEL = { wed:'📖 故事型', fri:'💡 資訊型', ad:'📢 廣告文', interact:'💬 互動型', note:'📌 提醒' };
 
   let currentWeek = '';
   let scheduleData = {};   // dowNum -> { topic, type, typeLabel }
@@ -917,8 +921,8 @@
     container.innerHTML = '';
     postCards = [];
 
-    // 只顯示 wed / fri / 其他有排程的天
-    const items = schedArr.filter(s => s.topic);
+    // 只顯示非 note 類型的發文才產生功課卡片
+    const items = schedArr.filter(s => s.topic && s.type !== 'note');
     if (items.length === 0) {
       // 如果 Sheet 還沒填，顯示預設提示
       container.innerHTML = `<div style="text-align:center;padding:40px 24px;color:#bbb;">
@@ -968,17 +972,13 @@
           <div class="post-card-body">
             <div class="info-row">
               <div class="info-item">
-                <div class="info-label">咪咪的提示</div>
-                <div class="info-tip">用自己的話說出來就好！想想有什麼親身經歷、或是讓你印象深刻的事？</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">用哪張照片</div>
-                <span class="visual-tag">📸 選一張跟主題相關的照片，或用 Gemini 製圖</span>
+                <div class="info-label">用什麼照片／圖片</div>
+                <span class="visual-tag">📸 選3-5張與主題相關的照片或Gemini製圖，然後LINE訊息給咪咪。</span>
               </div>
             </div>
             <div class="hw-box">
               <div class="hw-box-title">✏️ 您的草稿（週日前完成）</div>
-              <textarea class="hw-textarea" id="hw-${cardId}" placeholder="用自己的話寫就好，三到五句話即可。咪咪週一幫您潤飾 😊"></textarea>
+              <textarea class="hw-textarea" id="hw-${cardId}" placeholder="用自己的話說出來就好！想想有什麼親身經歷、或是讓你印象深刻的事？"></textarea>
               <p class="hw-hint">💡 不知道怎麼開始？先寫一句話也可以，週一再跟咪咪討論</p>
             </div>
             <button class="submit-btn" onclick="submitHW('${cardId}','${dowName}','${s.topic}')">✅ 草稿完成，送出給咪咪</button>
