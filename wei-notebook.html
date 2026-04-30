@@ -846,13 +846,28 @@
     const greet = hour < 12 ? '早安' : hour < 18 ? '午安' : '晚安';
     document.getElementById('greeting').textContent = greet + '，魏導！今天加油 💪';
 
-    currentWeek = getWeekKey(now);
+    // 週四(4)、週五(5)、週六(6)、週日(0) 自動顯示下週
+    const dow = now.getDay();
+    const isWeekend = (dow === 0 || dow === 4 || dow === 5 || dow === 6);
+    const targetDate = new Date(now);
+    if (dow === 6) targetDate.setDate(now.getDate() + 2);
+    else if (dow === 5) targetDate.setDate(now.getDate() + 3);
+    else if (dow === 4) targetDate.setDate(now.getDate() + 4);
+    else if (dow === 0) targetDate.setDate(now.getDate() + 1);
+
+    currentWeek = getWeekKey(targetDate);
     const weekNum = currentWeek.split('-W')[1];
     document.getElementById('week-badge').textContent = '第 ' + parseInt(weekNum) + ' 週';
-    document.getElementById('week-title').textContent = (now.getMonth()+1) + ' 月本週發文主題';
-    document.getElementById('week-date').textContent = '咪咪已為您準備好，請週日前完成草稿 ✍️';
 
-    await loadSchedule(now);
+    const month = targetDate.getMonth() + 1;
+    document.getElementById('week-title').textContent = isWeekend
+      ? '下週發文主題（請週日前完成草稿）'
+      : month + ' 月本週發文主題';
+    document.getElementById('week-date').textContent = isWeekend
+      ? '趁週末先完成，咪咪週一跟您確認 ✍️'
+      : '咪咪已為您準備好，請週日前完成草稿 ✍️';
+
+    await loadSchedule(targetDate);
   }
 
   // ── 從 Sheet 讀排程 ──
