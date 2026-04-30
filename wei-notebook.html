@@ -436,6 +436,27 @@
 
   .submit-btn:active { background: #235233; transform: scale(0.98); }
 
+  .rewrite-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 8px 20px 0;
+    padding: 13px;
+    background: transparent;
+    color: var(--warm);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    border: 1.5px solid var(--warm);
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .rewrite-btn:active { background: var(--cream-dk); transform: scale(0.98); }
+
   /* ── DIVIDER ── */
   .section-divider {
     display: flex;
@@ -655,7 +676,6 @@
   <!-- TABS -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('week')">本週功課</div>
-    <div class="tab" onclick="switchTab('rules')">發文規則</div>
     <div class="tab" onclick="switchTab('history')">已完成</div>
   </div>
 
@@ -785,10 +805,6 @@
       <div class="nav-icon">📋</div>
       <div class="nav-label">本週功課</div>
     </div>
-    <div class="nav-btn" id="nav-rules" onclick="switchTab('rules')">
-      <div class="nav-icon">📌</div>
-      <div class="nav-label">發文規則</div>
-    </div>
     <div class="nav-btn" id="nav-history" onclick="switchTab('history')">
       <div class="nav-icon">✅</div>
       <div class="nav-label">已完成</div>
@@ -818,7 +834,7 @@
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('view-' + tab).classList.add('active');
-    document.querySelectorAll('.tab')[['week','rules','history'].indexOf(tab)].classList.add('active');
+    document.querySelectorAll('.tab')[['week','history'].indexOf(tab)].classList.add('active');
     document.getElementById('nav-' + tab).classList.add('active');
     if (tab === 'history') loadHistory();
   }
@@ -1038,8 +1054,40 @@
     btn.textContent = '✅ 已送出！等待咪咪週一確認';
     btn.style.background = '#aaa';
 
+    // 加入「重新填寫」按鈕
+    const rewriteBtn = document.createElement('button');
+    rewriteBtn.className = 'rewrite-btn';
+    rewriteBtn.textContent = '✏️ 我想修改草稿';
+    rewriteBtn.onclick = () => rewriteHW(cardId, label, topic, rewriteBtn);
+    btn.parentNode.insertBefore(rewriteBtn, btn.nextSibling);
+
     addHistoryItem(label, topic, new Date(), text);
     showToast('🎉 太棒了！草稿已送出，等咪咪週一回覆');
+  }
+
+  // ── 重新填寫 ──
+  function rewriteHW(cardId, label, topic, rewriteBtn) {
+    const textarea = document.getElementById('hw-' + cardId);
+    const btn = document.querySelector(`button[onclick="submitHW('${cardId}','${label}','${topic}')"]`);
+
+    // 解鎖草稿框
+    textarea.disabled = false;
+    textarea.style.background = 'white';
+    textarea.style.color = 'var(--ink)';
+    textarea.focus();
+
+    // 恢復送出按鈕
+    btn.textContent = '✅ 草稿完成，送出給咪咪';
+    btn.style.background = 'var(--green)';
+    btn.disabled = false;
+
+    // 移除重新填寫按鈕
+    rewriteBtn.remove();
+
+    // 狀態點改回待辦
+    document.getElementById('status-' + cardId).className = 'status-dot pending';
+
+    showToast('草稿已解鎖，請重新填寫後再送出 ✏️');
   }
 
   // ── 讀歷史紀錄（已完成頁）──
